@@ -19,3 +19,15 @@ func False(t *testing.T, v bool) {
 		t.Errorf("assert.False failed")
 	}
 }
+
+func Nil(t *testing.T, v interface{}) {
+	if v != nil {
+		t.Errorf("assert.Nil failed")
+	}
+}
+
+func NonNil(t *testing.T, v interface{}) {
+	if v == nil {
+		t.Errorf("assert.NonNil failed")
+	}
+}
