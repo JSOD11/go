@@ -1,3 +1,5 @@
+// Package bitvector implements a bitvector type built on top of 64-bit integers.
+// Integer k exists in the bitvector if bit (k % 64) is set in words[k / 64].
 package bitvector
 
 import (
@@ -9,29 +11,29 @@ import (
 // Bitvector
 // A container which supports adding int64 values and testing for their presence.
 type Bitvector struct {
-	vector []uint64
+	words []uint64
 	*debug.Debugger
 }
 
 // ConstructBitvector
 // Bitvector constructor. Optional setting for debug logs.
 func ConstructBitvector(debugActive bool) *Bitvector {
-	vector := []uint64{0}
+	words := []uint64{0}
 	debugger := &debug.Debugger{Active: debugActive}
-	debugger.DebugLog("\n\n———————— Constructing bit vector ————————\n")
-	return &Bitvector{vector: vector, Debugger: debugger}
+	debugger.DebugLog("\n\n———————— Constructing bitvector ————————\n")
+	return &Bitvector{words: words, Debugger: debugger}
 }
 
 // Add
 // Adds n to the bitvector.
 func (b *Bitvector) Add(n uint64) {
-	multiple, remainder := n/64, n%64
-	b.DebugLog("\nADD: %v\nMultiple, remainder, vector: %v, %v, %v\n", n, multiple, remainder, b)
-	for uint64(len(b.vector)) <= multiple {
-		b.vector = append(b.vector, 0)
+	word, bit := n/64, n%64
+	b.DebugLog("\nADD: %v\nWord, bit, bitvector: %v, %v, %v\n", n, word, bit, b)
+	for uint64(len(b.words)) <= word {
+		b.words = append(b.words, 0)
 	}
-	b.vector[multiple] |= 1 << remainder
-	b.DebugLog("vector after add: %v\n", b)
+	b.words[word] |= 1 << bit
+	b.DebugLog("bitvector after add: %v\n", b)
 }
 
 // AddMany
@@ -45,14 +47,14 @@ func (b *Bitvector) AddMany(values ...uint64) {
 // Contains
 // Returns a boolean signifying whether n is currently present in the bitvector.
 func (b *Bitvector) Contains(n uint64) bool {
-	multiple, remainder := n/64, n%64
-	b.DebugLog("\nCONTAINS: %v\nMultiple, remainder, vector: %v, %v, %v\n", n, multiple, remainder, b)
-	if multiple >= uint64(len(b.vector)) {
+	word, bit := n/64, n%64
+	b.DebugLog("\nCONTAINS: %v\nWord, bit, bitvector: %v, %v, %v\n", n, word, bit, b)
+	if word >= uint64(len(b.words)) {
 		return false
 	}
-	value := b.vector[multiple]
-	b.DebugLog("Result: %v\n", value&(1<<remainder) != 0)
-	return value&(1<<remainder) != 0
+	value := b.words[word]
+	b.DebugLog("Result: %v\n", value&(1<<bit) != 0)
+	return value&(1<<bit) != 0
 }
 
 // ContainsMany
@@ -69,12 +71,12 @@ func (b *Bitvector) ContainsMany(values ...uint64) bool {
 // Remove
 // Sets the presence of n in the bitvector to false.
 func (b *Bitvector) Remove(n uint64) {
-	multiple, remainder := n/64, n%64
-	b.DebugLog("\nREMOVE: %v\nMultiple, remainder, vector: %v, %v, %v\n", n, multiple, remainder, b)
-	if multiple < uint64(len(b.vector)) && (b.vector[multiple]&(1<<remainder) != 0) {
-		b.vector[multiple] ^= 1 << remainder
+	word, bit := n/64, n%64
+	b.DebugLog("\nREMOVE: %v\nWord, bit, bitvector: %v, %v, %v\n", n, word, bit, b)
+	if word < uint64(len(b.words)) && (b.words[word]&(1<<bit) != 0) {
+		b.words[word] ^= 1 << bit
 	}
-	b.DebugLog("vector after remove: %v\n", b)
+	b.DebugLog("bitvector after remove: %v\n", b)
 }
 
 // RemoveMany
@@ -89,9 +91,9 @@ func (b *Bitvector) RemoveMany(values ...uint64) {
 // Print out the bitvector in human-readable string format.
 func (b *Bitvector) String() string {
 	var buf []string
-	for word := range b.vector {
+	for word := range b.words {
 		for i := range 64 {
-			if b.vector[word]&(1<<i) != 0 {
+			if b.words[word]&(1<<i) != 0 {
 				buf = append(buf, strconv.Itoa(64*word+i))
 			}
 		}

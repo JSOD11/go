@@ -1,3 +1,5 @@
+// Package hashmap implements a hashmap built on top of an array pointing to linked lists.
+// The hashmap supports Put, Get, Remove, and will automatically grow in size.
 package hashmap
 
 import (
@@ -54,7 +56,11 @@ func (h *HashMap) Get(key int64) (int64, bool) {
 }
 
 func (h *HashMap) Remove(key int64) {
-	return
+	h.DebugLog("\nREMOVE: key = %v\n", key)
+	bucket := h.hashFn(key, cap(h.table))
+	if bucket < len(h.table) {
+		h.table[bucket].Remove(key)
+	}
 }
 
 func (h *HashMap) tableOverweight() bool {
@@ -64,7 +70,7 @@ func (h *HashMap) tableOverweight() bool {
 func (h *HashMap) growTable() {
 	h.DebugLog("\nGROWING TABLE: items held = %v, length = %v, capacity = %v\n", h.itemsHeld, len(h.table), cap(h.table))
 	oldTable := h.table
-	h.table = make([]*linkedlist.LinkedList, h.itemsHeld+1, 2*(cap(oldTable)+1))
+	h.table = make([]*linkedlist.LinkedList, 0, 2*(cap(oldTable)+1))
 	for _, ll := range oldTable {
 		if ll != nil {
 			keys, values := ll.Items()

@@ -1,3 +1,5 @@
+// Package linkedlist implements a linked list type supporting operations
+// including Append, Insert, Get, Remove.
 package linkedlist
 
 import (

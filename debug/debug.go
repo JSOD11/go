@@ -1,3 +1,4 @@
+// Package debug is used to create debug logs for debugging tests.
 package debug
 
 import "fmt"
