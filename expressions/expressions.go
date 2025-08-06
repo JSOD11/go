@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 )
 
 type funcName uint8
@@ -16,7 +17,6 @@ const (
 	funcMultiply
 	funcDivide
 	funcSqrt
-	funcLog
 	funcSin
 )
 
@@ -42,11 +42,6 @@ func (u *unaryFuncClass) function() funcName {
 
 type Env map[rune]float64
 
-func isAlpha(x rune) bool {
-	return ('a' <= x && x <= 'z') ||
-		('A' <= x && x <= 'Z')
-}
-
 func isDigit(x rune) bool {
 	return '0' <= x && x <= '9'
 }
@@ -59,6 +54,12 @@ func getFunc(name string) (functionClass, error) {
 		return &binaryFuncClass{funcSubtract}, nil
 	case "multiply":
 		return &binaryFuncClass{funcMultiply}, nil
+	case "divide":
+		return &binaryFuncClass{funcDivide}, nil
+	case "sqrt":
+		return &unaryFuncClass{funcSqrt}, nil
+	case "sin":
+		return &unaryFuncClass{funcSin}, nil
 	default:
 		return nil, fmt.Errorf("unknown function name: %v", name)
 	}
@@ -66,14 +67,10 @@ func getFunc(name string) (functionClass, error) {
 
 func getArgs(argString string) ([]Constant, error) {
 	var args []Constant
-	for _, char := range argString {
-		if isDigit(char) {
-			// TODO: Support numbers with length greater than 1 and floats.
-			value, _ := strconv.ParseFloat(string(char), 64)
-			args = append(args, Constant(value))
-		}
+	for _, char := range strings.Split(argString, ",") {
+		value, _ := strconv.ParseFloat(char, 64)
+		args = append(args, Constant(value))
 	}
-	fmt.Println(args)
 	return args, nil
 }
 
@@ -83,17 +80,17 @@ func Parse(inputString string) (Expr, error) {
 		args      []Constant
 		err       error
 	)
+	processedString := strings.ToLower(strings.ReplaceAll(inputString, ", ", ","))
 	l := 0
-	for r, char := range inputString {
-		//fmt.Printf("Character at index %v: %c\n", r, char)
+	for r, char := range processedString {
 		if char == '(' {
-			funcClass, err = getFunc(inputString[l:r])
+			funcClass, err = getFunc(processedString[l:r])
 			if err != nil {
-				return nil, fmt.Errorf("unknown function name: %v", inputString[l:r])
+				return nil, fmt.Errorf("unknown function name: %v", processedString[l:r])
 			}
 			l = r + 1
 		} else if char == ')' {
-			args, err = getArgs(inputString[l:r])
+			args, err = getArgs(processedString[l:r])
 			if err != nil {
 				return nil, fmt.Errorf("received invalid arguments: %v", args)
 			}
@@ -139,10 +136,7 @@ type binaryExpr struct {
 
 func (b *binaryExpr) Evaluate() (float64, error) {
 	left, _ := b.left.Evaluate()
-	fmt.Printf("\nleft: %v\n", left)
 	right, _ := b.right.Evaluate()
-	fmt.Printf("\nright: %v\n", right)
-	fmt.Printf("BinaryFuncName: %v\n", b.funcName)
 	switch b.funcName {
 	case funcAdd:
 		return left + right, nil
@@ -167,8 +161,6 @@ func (u *unaryExpr) Evaluate() (float64, error) {
 	switch u.funcName {
 	case funcSqrt:
 		return math.Sqrt(child), nil
-	case funcLog:
-		return math.Log(child), nil
 	case funcSin:
 		return math.Sin(child), nil
 	default:

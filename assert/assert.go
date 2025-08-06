@@ -1,7 +1,10 @@
 // Package assert contains helper functions used for testing.
 package assert
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func Equal(t *testing.T, a, b interface{}) {
 	if a != b {
@@ -30,5 +33,11 @@ func Nil(t *testing.T, v interface{}) {
 func NonNil(t *testing.T, v interface{}) {
 	if v == nil {
 		t.Errorf("assert.NonNil failed")
+	}
+}
+
+func FloatsInDelta(t *testing.T, a, b, delta float64) {
+	if math.Abs(a-b) >= delta {
+		t.Errorf("assert.FloatsInDelta failed with |a - b| >= delta: a = %v, b = %v, delta = %v", a, b, delta)
 	}
 }
