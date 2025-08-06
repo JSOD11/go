@@ -42,10 +42,6 @@ func (u *unaryFuncClass) function() funcName {
 
 type Env map[rune]float64
 
-func isDigit(x rune) bool {
-	return '0' <= x && x <= '9'
-}
-
 func getFunc(name string) (functionClass, error) {
 	switch name {
 	case "add":
@@ -65,42 +61,68 @@ func getFunc(name string) (functionClass, error) {
 	}
 }
 
-func getArgs(argString string) ([]Constant, error) {
-	var args []Constant
-	for _, char := range strings.Split(argString, ",") {
-		value, _ := strconv.ParseFloat(char, 64)
-		args = append(args, Constant(value))
+func getArgs(argString string) ([]Expr, error) {
+	var args []Expr
+	// Trim parentheses on either end.
+	trimmedString := argString[1 : len(argString)-1]
+	fmt.Printf("trimmedString: %v\n", trimmedString)
+	depth, l := 0, 0
+	chunks := strings.Split(trimmedString, ",")
+	fmt.Printf("chunks: %v,\n", chunks)
+	for r, chunk := range chunks {
+		fmt.Printf("chunk: %v, depth: %v\n", chunk, depth)
+		if strings.Contains(chunk, "(") {
+			depth++
+		} else if strings.Contains(chunk, ")") {
+			s := strings.Join(chunks[l:r+1], ",")
+			innerArgs, err := parse(s)
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, innerArgs)
+			depth--
+			l = r + 1
+		} else if depth == 0 {
+			if value, err := strconv.ParseFloat(chunk, 64); err == nil {
+				args = append(args, Constant(value))
+			}
+			l = r + 1
+		}
 	}
 	return args, nil
 }
 
 func Parse(inputString string) (Expr, error) {
-	var (
-		funcClass functionClass
-		args      []Constant
-		err       error
-	)
-	processedString := strings.ToLower(strings.ReplaceAll(inputString, ", ", ","))
-	l := 0
-	for r, char := range processedString {
-		if char == '(' {
-			funcClass, err = getFunc(processedString[l:r])
-			if err != nil {
-				return nil, fmt.Errorf("unknown function name: %v", processedString[l:r])
-			}
-			l = r + 1
-		} else if char == ')' {
-			args, err = getArgs(processedString[l:r])
-			if err != nil {
-				return nil, fmt.Errorf("received invalid arguments: %v", args)
-			}
-			l = r + 1
-		}
+	processedString := preprocessInput(inputString)
+	return parse(processedString)
+}
+
+func preprocessInput(inputString string) string {
+	return strings.ToLower(strings.ReplaceAll(inputString, ", ", ","))
+}
+
+func parse(s string) (Expr, error) {
+	fmt.Printf("s: %v\n", s)
+	if value, err := strconv.ParseFloat(s, 64); err == nil {
+		return Constant(value), nil
 	}
+
+	i := strings.Index(s, "(")
+	funcClass, err := getFunc(s[:i])
+	fmt.Printf("funcClass: %v, err: %v\n", funcClass, err)
+	if err != nil {
+		return nil, err
+	}
+	args, err := getArgs(s[i:])
+	fmt.Printf("args: %v, err: %v\n\n", args, err)
+	if err != nil {
+		return nil, err
+	}
+
 	return check(funcClass, args)
 }
 
-func check(funcClass functionClass, args []Constant) (Expr, error) {
+func check(funcClass functionClass, args []Expr) (Expr, error) {
 	switch funcClass.(type) {
 	case *binaryFuncClass:
 		if len(args) != 2 {
