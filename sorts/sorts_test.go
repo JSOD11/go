@@ -49,3 +49,23 @@ func TestSorts(t *testing.T) {
 		}
 	}
 }
+
+var s = []int{23, 14, 5, 16, 82, 90, 95, 21, 45, 75, 28, 85, 91}
+
+func BenchmarkBuiltInSort(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		sortFuncs[0].Sort(s)
+	}
+}
+
+func BenchmarkMergeSort(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		sortFuncs[1].Sort(s)
+	}
+}
+
+func BenchmarkInsertionSort(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		sortFuncs[2].Sort(s)
+	}
+}
