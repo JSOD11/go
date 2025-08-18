@@ -11,24 +11,32 @@ var sortFuncs = []sortFunction{
 	newBuiltInSort(),
 	newMergeSort(),
 	newInsertionSort(),
+	newBubbleSort(),
+	newQuickSort(),
+}
+
+var (
+	testSlices  [][]int
+	numSlices   = 10
+	sliceLength = 100000
+	maxValue    = 100
+)
+
+func randIntSlice(sliceLength int) []int {
+	slice := make([]int, sliceLength)
+	for i := range sliceLength {
+		slice[i] = rand.Intn(maxValue)
+	}
+	return slice
+}
+
+func init() {
+	for range numSlices {
+		testSlices = append(testSlices, randIntSlice(sliceLength))
+	}
 }
 
 func TestSorts(t *testing.T) {
-
-	var (
-		testSlices  [][]int
-		numSlices   = 10
-		sliceLength = 20
-		maxValue    = 100
-	)
-
-	for range numSlices {
-		var slice []int
-		for range sliceLength {
-			slice = append(slice, rand.Intn(maxValue))
-		}
-		testSlices = append(testSlices, slice)
-	}
 
 	for _, slice := range testSlices {
 		//fmt.Printf("\nSlice: %v\n", slice)
@@ -50,22 +58,42 @@ func TestSorts(t *testing.T) {
 	}
 }
 
-var s = []int{23, 14, 5, 16, 82, 90, 95, 21, 45, 75, 28, 85, 91}
-
 func BenchmarkBuiltInSort(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		sortFuncs[0].Sort(s)
+	builtIn := newBuiltInSort()
+	slice := randIntSlice(sliceLength)
+	for b.Loop() {
+		builtIn.Sort(slice)
 	}
 }
 
 func BenchmarkMergeSort(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		sortFuncs[1].Sort(s)
+	merge := newMergeSort()
+	slice := randIntSlice(sliceLength)
+	for b.Loop() {
+		merge.Sort(slice)
 	}
 }
 
 func BenchmarkInsertionSort(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		sortFuncs[2].Sort(s)
+	insertion := newInsertionSort()
+	slice := randIntSlice(sliceLength)
+	for b.Loop() {
+		insertion.Sort(slice)
+	}
+}
+
+func BenchmarkBubbleSort(b *testing.B) {
+	bubble := newBubbleSort()
+	slice := randIntSlice(sliceLength)
+	for b.Loop() {
+		bubble.Sort(slice)
+	}
+}
+
+func BenchmarkQuickSort(b *testing.B) {
+	quick := newQuickSort()
+	slice := randIntSlice(sliceLength)
+	for b.Loop() {
+		quick.Sort(slice)
 	}
 }
